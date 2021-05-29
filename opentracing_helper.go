@@ -2,11 +2,10 @@ package gormopentracing
 
 import (
 	"context"
-	"unsafe"
+	"strconv"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/opentracing/opentracing-go"
-	opentracinglog "github.com/opentracing/opentracing-go/log"
+	"github.com/openzipkin/zipkin-go"
 	"gorm.io/gorm"
 )
 
@@ -20,8 +19,8 @@ var (
 	_tableTagKey = keyWithPrefix("table")
 	// span.Log keys
 	//_errorLogKey        = keyWithPrefix("error")
-	_resultLogKey       = keyWithPrefix("result")
-	_sqlLogKey          = keyWithPrefix("sql")
+	//_resultLogKey       = keyWithPrefix("result")
+	//_sqlLogKey          = keyWithPrefix("sql")
 	_rowsAffectedLogKey = keyWithPrefix("rowsAffected")
 )
 
@@ -45,7 +44,7 @@ func (p opentracingPlugin) injectBefore(db *gorm.DB, op operationName) {
 		return
 	}
 
-	sp, _ := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, p.opt.tracer, op.String())
+	sp := zipkin.SpanFromContext(db.Statement.Context)
 	db.InstanceSet(opentracingSpanKey, sp)
 }
 
@@ -66,7 +65,7 @@ func (p opentracingPlugin) extractAfter(db *gorm.DB) {
 		return
 	}
 
-	sp, ok := v.(opentracing.Span)
+	sp, ok := v.(zipkin.Span)
 	if !ok || sp == nil {
 		return
 	}
@@ -74,49 +73,14 @@ func (p opentracingPlugin) extractAfter(db *gorm.DB) {
 
 	// tag and log fields we want.
 	tag(sp, db)
-	log(sp, db, p.opt.logResult, p.opt.logSqlParameters)
 }
 
 // tag called after operation
-func tag(sp opentracing.Span, db *gorm.DB) {
+func tag(sp zipkin.Span, db *gorm.DB) {
 	if err := db.Error; err != nil {
-		sp.SetTag(_errorTagKey, true)
+		sp.Tag(_errorTagKey, "true")
 	}
 
-	sp.SetTag(_tableTagKey, db.Statement.Table)
-}
-
-// log called after operation
-func log(sp opentracing.Span, db *gorm.DB, verbose bool, logSqlVariables bool) {
-	fields := make([]opentracinglog.Field, 0, 4)
-	fields = appendSql(fields, db, logSqlVariables)
-	fields = append(fields, opentracinglog.Object(_rowsAffectedLogKey, db.Statement.RowsAffected))
-
-	// log error
-	if err := db.Error; err != nil {
-		fields = append(fields, opentracinglog.Error(err))
-	}
-
-	if verbose && db.Statement.Dest != nil {
-		// DONE(@yeqown) fill result fields into span log
-		// FIXED(@yeqown) db.Statement.Dest still be metatable now ?
-		v, err := json.Marshal(db.Statement.Dest)
-		if err == nil {
-			fields = append(fields, opentracinglog.String(_resultLogKey, *(*string)(unsafe.Pointer(&v))))
-		} else {
-			db.Logger.Error(context.Background(), "could not marshal db.Statement.Dest: %v", err)
-		}
-	}
-
-	sp.LogFields(fields...)
-}
-
-func appendSql(fields []opentracinglog.Field, db *gorm.DB, logSqlVariables bool) []opentracinglog.Field {
-	if logSqlVariables {
-		fields = append(fields, opentracinglog.String(_sqlLogKey,
-			db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)))
-	} else {
-		fields = append(fields, opentracinglog.String(_sqlLogKey, db.Statement.SQL.String()))
-	}
-	return fields
+	sp.Tag(_tableTagKey, db.Statement.Table)
+	sp.Tag(_rowsAffectedLogKey, strconv.FormatInt(db.Statement.RowsAffected, 10))
 }

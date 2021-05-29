@@ -2,6 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-gorm/opentracing)](https://goreportcard.com/report/github.com/go-gorm/opentracing) [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/go-gorm/opentracing)
 
+Fork for Zipkin tracing
 opentracing support for gorm2.
 
 ### Features

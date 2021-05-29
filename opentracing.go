@@ -1,6 +1,7 @@
 package gormopentracing
 
 import (
+	"github.com/openzipkin/zipkin-go"
 	"strings"
 
 	"gorm.io/gorm"
@@ -13,8 +14,8 @@ type opentracingPlugin struct {
 
 // New constructs a new plugin based opentracing. It supports to trace all operations in gorm,
 // so if you have already traced your servers, now this plugin will perfect your tracing job.
-func New(opts ...applyOption) gorm.Plugin {
-	dst := defaultOption()
+func New(tracer zipkin.Tracer, opts ...applyOption) gorm.Plugin {
+	dst := defaultOption(tracer)
 	for _, apply := range opts {
 		apply(dst)
 	}

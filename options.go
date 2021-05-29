@@ -1,6 +1,8 @@
 package gormopentracing
 
-import "github.com/opentracing/opentracing-go"
+import (
+	"github.com/openzipkin/zipkin-go"
+)
 
 type options struct {
 	// logResult means log SQL operation result into span log which causes span size grows up.
@@ -8,16 +10,16 @@ type options struct {
 	logResult bool
 
 	// tracer allows users to use customized and different tracer to makes tracing clearly.
-	tracer opentracing.Tracer
+	tracer zipkin.Tracer
 
 	// Whether to log statement parameters or leave placeholders in the queries.
 	logSqlParameters bool
 }
 
-func defaultOption() *options {
+func defaultOption(tracer zipkin.Tracer) *options {
 	return &options{
 		logResult:        false,
-		tracer:           opentracing.GlobalTracer(),
+		tracer:           tracer,
 		logSqlParameters: true,
 	}
 }
@@ -32,13 +34,13 @@ func WithLogResult(logResult bool) applyOption {
 }
 
 // WithTracer allows to use customized tracer rather than the global one only.
-func WithTracer(tracer opentracing.Tracer) applyOption {
+func WithTracer(tracer *zipkin.Tracer) applyOption {
 	return func(o *options) {
 		if tracer == nil {
 			return
 		}
 
-		o.tracer = tracer
+		o.tracer = *tracer
 	}
 }
 
