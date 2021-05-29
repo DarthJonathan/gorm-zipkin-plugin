@@ -20,7 +20,7 @@ var (
 	// span.Log keys
 	//_errorLogKey        = keyWithPrefix("error")
 	//_resultLogKey       = keyWithPrefix("result")
-	_sqlLogKey          = keyWithPrefix("sql")
+	//_sqlLogKey          = keyWithPrefix("sql")
 	_rowsAffectedLogKey = keyWithPrefix("rowsAffected")
 )
 
