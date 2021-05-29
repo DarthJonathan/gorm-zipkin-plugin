@@ -20,7 +20,7 @@ var (
 	// span.Log keys
 	//_errorLogKey        = keyWithPrefix("error")
 	//_resultLogKey       = keyWithPrefix("result")
-	//_sqlLogKey          = keyWithPrefix("sql")
+	_sqlLogKey          = keyWithPrefix("sql")
 	_rowsAffectedLogKey = keyWithPrefix("rowsAffected")
 )
 
@@ -44,7 +44,7 @@ func (p opentracingPlugin) injectBefore(db *gorm.DB, op operationName) {
 		return
 	}
 
-	sp, _ := p.opt.tracer.StartSpanFromContext(db.Statement.Context, db.Statement.Table)
+	sp, _ := p.opt.tracer.StartSpanFromContext(db.Statement.Context, op.String())
 	db.InstanceSet(opentracingSpanKey, sp)
 }
 
@@ -83,4 +83,5 @@ func tag(sp zipkin.Span, db *gorm.DB) {
 
 	sp.Tag(_tableTagKey, db.Statement.Table)
 	sp.Tag(_rowsAffectedLogKey, strconv.FormatInt(db.Statement.RowsAffected, 10))
+	//sp.Tag(_sqlLogKey, db.Statement.SQL.String())
 }
