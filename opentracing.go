@@ -60,18 +60,6 @@ func (p opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 	err = db.Callback().Delete().After("gorm:delete").Register(_stageAfterDelete.Name(), p.after)
 	e.add(_stageAfterDelete, err)
 
-	// row
-	err = db.Callback().Row().Before("gorm:row").Register(_stageBeforeRow.Name(), p.beforeRow)
-	e.add(_stageBeforeRow, err)
-	err = db.Callback().Row().After("gorm:row").Register(_stageAfterRow.Name(), p.after)
-	e.add(_stageAfterRow, err)
-
-	// raw
-	err = db.Callback().Raw().Before("gorm:raw").Register(_stageBeforeRaw.Name(), p.beforeRaw)
-	e.add(_stageBeforeRaw, err)
-	err = db.Callback().Raw().After("gorm:raw").Register(_stageAfterRaw.Name(), p.after)
-	e.add(_stageAfterRaw, err)
-
 	return e.toError()
 }
 
