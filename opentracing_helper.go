@@ -44,7 +44,7 @@ func (p opentracingPlugin) injectBefore(db *gorm.DB, op operationName) {
 		return
 	}
 
-	sp := zipkin.SpanFromContext(db.Statement.Context)
+	sp, _ := p.opt.tracer.StartSpanFromContext(db.Statement.Context, db.Statement.Table)
 	db.InstanceSet(opentracingSpanKey, sp)
 }
 
