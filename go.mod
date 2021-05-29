@@ -1,4 +1,4 @@
-module gorm.io/plugin/zipkin-interceptor
+module github.com/darthjonathan/gorm-zipkin-plugin
 
 go 1.15
 
